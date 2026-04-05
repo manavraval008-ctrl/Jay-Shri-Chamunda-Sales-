@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jai Shree Chamunda Sales</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      padding: 20px;
+      background: rgba(0,0,0,0.5);
+      margin: 0;
+    }
+
+    #adminBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: red;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      padding: 15px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.1);
+      width: 260px;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 10px;
+    }
+
+    button {
+      padding: 8px;
+      border: none;
+      border-radius: 5px;
+      margin-top: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .cart { background: orange; }
+    .chat { background: green; }
+    .pay { background: blue; }
+
+    input, textarea {
+      width: 90%;
+      padding: 8px;
+      margin: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    #adminPanel {
+      display: none;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<button id="adminBtn" onclick="openAdmin()">Admin</button>
+
+<h1>Jai Shree Chamunda Sales</h1>
+
+<div id="userView">
+  <div class="container" id="productList"></div>
+</div>
+
+<div id="adminPanel">
+
+<h2>Admin Login</h2>
+
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="checkLogin()">Login</button>
+
+<div id="adminArea" style="display:none;">
+
+<h3>Add Machine</h3>
+
+<!-- IMAGE UPLOAD -->
+<input type="file" id="imgFile" accept="image/*">
+
+<input id="name" placeholder="Machine Name">
+<input id="price" placeholder="Price">
+<input id="stock" placeholder="Stock">
+<textarea id="desc" placeholder="Description"></textarea>
+
+<button onclick="addProduct()">Add Product</button>
+
+<h3>All Machines</h3>
+<div id="adminList"></div>
+
+</div>
+
+</div>
+
+<script>
+
+// OPEN ADMIN
+function openAdmin(){
+  document.getElementById("userView").style.display="none";
+  document.getElementById("adminPanel").style.display="block";
+}
+
+// LOGIN
+function checkLogin(){
+  var u = document.getElementById("username").value;
+  var p = document.getElementById("password").value;
+
+  if(u=="admin" && p=="1234"){
+    document.getElementById("adminArea").style.display="block";
+    loadAdmin();
+  } else {
+    alert("Wrong Login ❌");
+  }
+}
+
+// ADD PRODUCT WITH IMAGE UPLOAD
+function addProduct(){
+
+  var file = document.getElementById("imgFile").files[0];
+
+  if(!file){
+    alert("Select Image ❌");
+    return;
+  }
+
+  var reader = new FileReader();
+
+  reader.onload = function(e){
+
+    var data = {
+      img: e.target.result,
+      name: document.getElementById("name").value,
+      price: document.getElementById("price").value,
+      stock: document.getElementById("stock").value,
+      desc: document.getElementById("desc").value
+    };
+
+    var products = JSON.parse(localStorage.getItem("products")) || [];
+
+    products.push(data);
+
+    localStorage.setItem("products", JSON.stringify(products));
+
+    alert("Added ✅");
+
+    loadProducts();
+    loadAdmin();
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// LOAD PRODUCTS
+function loadProducts(){
+
+  var products = JSON.parse(localStorage.getItem("products")) || [];
+
+  var html = "";
+
+  for(var i=0;i<products.length;i++){
+
+    var p = products[i];
+
+    var stockText = (p.stock > 0) ? "In Stock" : "Out of Stock";
+
+    html += `
+    <div class="card">
+      <img src="${p.img}">
+      <h3>${p.name}</h3>
+      <p>₹ ${p.price}</p>
+      <p>${p.desc}</p>
+      <p><b>${stockText}</b></p>
+
+      <button class="cart" onclick="addToCart('${p.name}','${p.price}')">
+      Add to Cart
+      </button>
+
+      <button class="chat" onclick="chat('${p.name}','${p.price}')">
+      WhatsApp
+      </button>
+
+      <button class="pay" onclick="pay('${p.price}')">
+      Pay
+      </button>
+
+    </div>`;
+  }
+
+  document.getElementById("productList").innerHTML = html;
+}
+loadProducts();
+
+// CART
+function addToCart(name,price){
+  var cart = JSON.parse(localStorage.getItem("cart")) || [];
+  cart.push({name:name,price:price});
+  localStorage.setItem("cart",JSON.stringify(cart));
+  alert("Added to Cart 🛒");
+}
+
+// WHATSAPP
+function chat(name, price){
+  var msg = "Hello, I want " + name + " for ₹" + price;
+  window.open("https://wa.me/919537092128?text=" + encodeURIComponent(msg));
+}
+
+// PAYMENT
+function pay(price){
+  var upi = "upi://pay?pa=yourupi@upi&pn=ChamundaSales&am=" + price;
+  window.open(upi);
+}
+
+// ADMIN LIST
+function loadAdmin(){
+
+  var products = JSON.parse(localStorage.getItem("products")) || [];
+
+  var html = "";
+
+  for(var i=0;i<products.length;i++){
+
+    var p = products[i];
+
+    html += `
+    <div class="card">
+      <h3>${p.name}</h3>
+      <p>Stock: ${p.stock}</p>
+      <button onclick="deleteItem(${i})">Delete</button>
+    </div>`;
+  }
+
+  document.getElementById("adminList").innerHTML = html;
+}
+
+// DELETE
+function deleteItem(i){
+  var products = JSON.parse(localStorage.getItem("products")) || [];
+  products.splice(i,1);
+  localStorage.setItem("products",JSON.stringify(products));
+  loadProducts();
+  loadAdmin();
+}
+
+</script>
+
+</body>
+</html>
